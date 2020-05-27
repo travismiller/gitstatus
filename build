@@ -77,6 +77,9 @@ if [ -n "$gitstatus_install_tools" ]; then
     netbsd)
       command pkgin -y install cmake gmake binutils git
     ;;
+    openbsd)
+      command pkg_add cmake gmake gcc g++ git
+    ;;
     darwin)
       if ! command -v make >/dev/null 2>&1 || ! command -v gcc >/dev/null 2>&1; then
         >&2 echo "[error] please run 'xcode-select --install' and retry"
@@ -123,7 +126,7 @@ fi
 libgit2_cmake_flags=
 libgit2_cflags="$cflags"
 
-gitstatus_cxx=g++
+gitstatus_cxx=${CXX:-g++}
 gitstatus_cxxflags="$cflags -I${workdir}/libgit2/include -DGITSTATUS_ZERO_NSEC -D_GNU_SOURCE"
 gitstatus_ldflags="-L${workdir}/libgit2/build"
 gitstatus_ldlibs=
@@ -137,13 +140,7 @@ case "$gitstatus_kernel" in
     gitstatus_ldflags="$gitstatus_ldflags -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now"
     libgit2_cmake_flags="$libgit2_cmake_flags -DENABLE_REPRODUCIBLE_BUILDS=ON"
   ;;
-  freebsd)
-    gitstatus_make=gmake
-    gitstatus_ldflags="$gitstatus_ldflags -static"
-    gitstatus_ldflags="$gitstatus_ldflags -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now"
-    libgit2_cmake_flags="$libgit2_cmake_flags -DENABLE_REPRODUCIBLE_BUILDS=ON"
-  ;;
-  netbsd)
+  freebsd|netbsd|openbsd)
     gitstatus_make=gmake
     gitstatus_ldflags="$gitstatus_ldflags -static"
     gitstatus_ldflags="$gitstatus_ldflags -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now"
@@ -451,7 +448,7 @@ case "$gitstatus_kernel" in
       exit 1
     fi
   ;;
-  freebsd|netbsd|darwin)
+  freebsd|netbsd|openbsd|darwin)
     if [ -n "$docker_cmd" ]; then
       >&2 echo "[error] docker (-d) is not supported on $gitstatus_kernel"
       exit 1
